@@ -38,6 +38,8 @@ def dom_color():
     for jpg in onlyfiles:
         debug(2, "Assessing {0}".format(jpg))
         image       = cv2.imread(jpg)
+        # TODO test to see if different output if done in RGB space
+        # would allow easier output of primary color for visual debugging
         image       = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
         image       = cv2.resize(image, (50,50))
 
@@ -52,6 +54,7 @@ def dom_color():
     dominant_colors = np.array(dominant_colors).reshape(len(dominant_colors),3)
     data = np.hstack((data,dominant_colors))
     # TODO Output a debugging swatch of the dominant color
+    # see charlesleifer code above for plotting histogram of dominant colors
     # for img in range(0, data.shape[0]):
     #     out_nm      = str(data[img,:0]) + '_dom_color.png'
     #     out         = cv2.cvtColor(np.asarray(data[img, 1:4]), cv2.COLOR_Lab2BGR)
@@ -76,7 +79,7 @@ def collage(data, x, y):
             img_nm  = data[x*i+j,0]
             debug(2, 'Adding to collage ' + img_nm)
             img     = cv2.imread(img_nm)
-            img     = cv2.resize(img, (700, 700))
+            img     = cv2.resize(img, (200, 200))
             img     = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             if j > 0:
                 row = np.hstack((row, img))
@@ -91,10 +94,7 @@ def collage(data, x, y):
     return cv2.cvtColor(final, cv2.COLOR_RGB2BGR)
 
 
-# Note: Order based on alphabetical ordering
-def ref_collage(data, x, y):
-    assert (x*y <= data.shape[0]) # TODO < ?
-    final           = []
+def ref_collage(x, y):
     order           = [ 'pinkfloyd_thedarksideofthemoon',
                         'foofighters_wastinglight',
                         'blink182_takeoffyourpantsandj',
@@ -120,14 +120,16 @@ def ref_collage(data, x, y):
                         'kendricklamar_goodkidmaadcity',
                         'thenational_troublewillfindme',
                         ]
+    assert (x*y <= len(order))
 
+    final           = []
     num              = 0
     row              = []
     for img_nm in order:
         jpg          = img_nm + '.jpg'
-        debug(2, 'Adding to reference collage ' + jpg)
+        debug(1, 'Adding to reference collage ' + jpg)
         img          = cv2.imread(jpg)
-        img          = cv2.resize(img, (900, 900))
+        img          = cv2.resize(img, (400, 400))
         img          = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         if num % x == 0:
@@ -143,25 +145,29 @@ def ref_collage(data, x, y):
 
         num           += 1
 
-
     return cv2.cvtColor(final, cv2.COLOR_RGB2BGR)
+
 
 def main():
     if (len(sys.argv) != 2):
         print("Usage: python3 art.py <dir>")
         return
 
-    # Get all images in a folder
+    # Set path of images folder
     cwd             = os.getcwd()
     mypath          = sys.argv[1]
     os.chdir(mypath)
 
-    data            = dom_color()
-    coll            = collage(data, 6, 4)
-    cv2.imwrite("collage.png", coll)
+    # Assess dominant color
+    # data            = dom_color()
 
-    ref_coll        = ref_collage(data, 6, 4)
-    cv2.imwrite("ref_collage.png", ref_coll)
+    # Build and export collage
+    # coll            = collage(data, 6, 4)
+    # cv2.imwrite("collage.png", coll)
+
+    # Reference collage based on manual ordering of images
+    ref_coll        = ref_collage(6, 4)
+    cv2.imwrite("../ref_collage.png", ref_coll)
 
 
 if __name__ == '__main__':
